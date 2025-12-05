@@ -164,6 +164,9 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('click-through-toggled', (_, isEnabled) => {
                 this._isClickThrough = isEnabled;
             });
+            ipcRenderer.on('update-token-count', (_, usageMetadata) => {
+                this.updateTokenCount(usageMetadata);
+            });
         }
     }
 
@@ -174,6 +177,7 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.removeAllListeners('update-response');
             ipcRenderer.removeAllListeners('update-status');
             ipcRenderer.removeAllListeners('click-through-toggled');
+            ipcRenderer.removeAllListeners('update-token-count');
         }
     }
 
@@ -365,6 +369,14 @@ export class CheatingDaddyApp extends LitElement {
     handleAutoNavigationToggled(e) {
         this._autoNavigationPaused = e.detail.paused;
         console.log('[handleAutoNavigationToggled] Auto-navigation paused:', this._autoNavigationPaused);
+    }
+
+    updateTokenCount(usageMetadata) {
+        // Find the assistant view and update its token count
+        const assistantView = this.shadowRoot?.querySelector('assistant-view');
+        if (assistantView) {
+            assistantView.updateTokenCount(usageMetadata);
+        }
     }
 
     // Onboarding event handlers
