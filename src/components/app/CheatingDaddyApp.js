@@ -165,7 +165,11 @@ export class CheatingDaddyApp extends LitElement {
                 this._isClickThrough = isEnabled;
             });
             ipcRenderer.on('update-token-count', (_, usageMetadata) => {
-                this.updateTokenCount(usageMetadata);
+                try {
+                    this.updateTokenCount(usageMetadata);
+                } catch (error) {
+                    console.error('Error updating token count:', error);
+                }
             });
         }
     }

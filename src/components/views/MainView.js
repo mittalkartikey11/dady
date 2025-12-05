@@ -23,9 +23,9 @@ export class MainView extends LitElement {
             gap: 12px;
             margin-bottom: 20px;
             padding: 16px;
-            background: rgba(255, 215, 0, 0.05);
+            background: var(--golden-rgba-light);
             border-radius: 12px;
-            border: 1px solid rgba(255, 215, 0, 0.1);
+            border: 1px solid var(--golden-rgba-border);
             transition: all 0.2s ease;
         }
 
@@ -52,7 +52,7 @@ export class MainView extends LitElement {
 
         input:focus {
             outline: none;
-            border-color: #ffd700;
+            border-color: var(--golden-primary);
             box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
             background: var(--input-focus-background);
         }
@@ -85,9 +85,9 @@ export class MainView extends LitElement {
         }
 
         .start-button {
-            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            background: linear-gradient(135deg, var(--golden-primary) 0%, var(--golden-secondary) 100%);
             color: #000;
-            border: 1px solid rgba(255, 215, 0, 0.3);
+            border: 1px solid var(--golden-rgba-border-strong);
             padding: 12px 24px;
             border-radius: 10px;
             font-size: 14px;
@@ -97,11 +97,11 @@ export class MainView extends LitElement {
             align-items: center;
             gap: 6px;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+            box-shadow: 0 2px 8px var(--golden-rgba-border-strong);
         }
 
         .start-button:hover {
-            background: linear-gradient(135deg, #ffc700 0%, #ff9500 100%);
+            background: linear-gradient(135deg, var(--golden-light) 0%, var(--golden-dark) 100%);
             border-color: rgba(255, 215, 0, 0.5);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
@@ -113,10 +113,10 @@ export class MainView extends LitElement {
         }
 
         .start-button.initializing:hover {
-            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-            border-color: rgba(255, 215, 0, 0.3);
+            background: linear-gradient(135deg, var(--golden-primary) 0%, var(--golden-secondary) 100%);
+            border-color: var(--golden-rgba-border-strong);
             transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+            box-shadow: 0 2px 8px var(--golden-rgba-border-strong);
         }
 
         .shortcut-icons {
@@ -144,7 +144,7 @@ export class MainView extends LitElement {
         }
 
         .link {
-            color: #ffd700;
+            color: var(--golden-primary);
             text-decoration: underline;
             cursor: pointer;
             font-weight: 600;
@@ -152,7 +152,7 @@ export class MainView extends LitElement {
         }
 
         .link:hover {
-            color: #ffc700;
+            color: var(--golden-light);
         }
 
         .shortcut-hint {

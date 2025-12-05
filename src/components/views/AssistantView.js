@@ -59,7 +59,7 @@ export class AssistantView extends LitElement {
         .response-container h5,
         .response-container h6 {
             margin: 1.2em 0 0.6em 0;
-            color: #ffd700;
+            color: var(--golden-primary);
             font-weight: 600;
         }
 
@@ -107,8 +107,8 @@ export class AssistantView extends LitElement {
         }
 
         .response-container code {
-            background: rgba(255, 215, 0, 0.15);
-            color: #ffd700;
+            background: var(--golden-rgba-medium);
+            color: var(--golden-primary);
             padding: 0.2em 0.4em;
             border-radius: 3px;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -117,7 +117,7 @@ export class AssistantView extends LitElement {
 
         .response-container pre {
             background: rgba(30, 30, 50, 0.8);
-            border: 1px solid rgba(255, 215, 0, 0.3);
+            border: 1px solid var(--golden-rgba-border-strong);
             border-radius: 6px;
             padding: 1em;
             overflow-x: auto;
@@ -128,7 +128,7 @@ export class AssistantView extends LitElement {
             background: none;
             padding: 0;
             border-radius: 0;
-            color: #ffd700;
+            color: var(--golden-primary);
         }
 
         .response-container a {
@@ -343,7 +343,7 @@ export class AssistantView extends LitElement {
         }
 
         .screenshot-button.success {
-            color: #ffd700;
+            color: var(--golden-primary);
         }
 
         .screenshot-button svg {
@@ -369,8 +369,8 @@ export class AssistantView extends LitElement {
 
         .token-badge {
             background: rgba(255, 215, 0, 0.2);
-            color: #ffd700;
-            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: var(--golden-primary);
+            border: 1px solid var(--golden-rgba-border-strong);
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 11px;
@@ -729,7 +729,7 @@ export class AssistantView extends LitElement {
     }
 
     updateTokenCount(usageMetadata) {
-        if (usageMetadata && usageMetadata.totalTokenCount) {
+        if (usageMetadata && typeof usageMetadata === 'object' && usageMetadata.totalTokenCount) {
             this.totalTokenCount = usageMetadata.totalTokenCount;
             this.requestUpdate();
         }
@@ -789,7 +789,7 @@ export class AssistantView extends LitElement {
         return html`
             <div class="header-container">
                 <div class="header-left">
-                    ${this.totalTokenCount > 0 ? html`<span class="token-badge">🪙 Tokens: ${this.totalTokenCount}</span>` : ''}
+                    ${this.totalTokenCount > 0 ? html`<span class="token-badge">🪙 Tokens: ${this.totalTokenCount.toLocaleString()}</span>` : ''}
                 </div>
             </div>
 
