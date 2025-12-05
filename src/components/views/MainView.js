@@ -149,6 +149,8 @@ export class MainView extends LitElement {
         isInitializing: { type: Boolean },
         onLayoutModeChange: { type: Function },
         showApiKeyError: { type: Boolean },
+        showApiKeyError2: { type: Boolean },
+        showApiKeyError3: { type: Boolean },
     };
 
     constructor() {
@@ -158,6 +160,8 @@ export class MainView extends LitElement {
         this.isInitializing = false;
         this.onLayoutModeChange = () => {};
         this.showApiKeyError = false;
+        this.showApiKeyError2 = false;
+        this.showApiKeyError3 = false;
         this.boundKeydownHandler = this.handleKeydown.bind(this);
     }
 
@@ -189,22 +193,38 @@ export class MainView extends LitElement {
 
         if (isStartShortcut) {
             e.preventDefault();
-            this.handleStartClick();
+            this.handleStartClick(1);
         }
     }
 
-    handleInput(e) {
-        localStorage.setItem('apiKey', e.target.value);
+    handleInput(e, keyNumber) {
+        localStorage.setItem(`apiKey${keyNumber}`, e.target.value);
         // Clear error state when user starts typing
-        if (this.showApiKeyError) {
+        if (keyNumber === 1 && this.showApiKeyError) {
             this.showApiKeyError = false;
+        } else if (keyNumber === 2 && this.showApiKeyError2) {
+            this.showApiKeyError2 = false;
+        } else if (keyNumber === 3 && this.showApiKeyError3) {
+            this.showApiKeyError3 = false;
         }
     }
 
-    handleStartClick() {
+    handleStartClick(keyNumber) {
         if (this.isInitializing) {
             return;
         }
+
+        // Get the appropriate API key
+        const apiKey = localStorage.getItem(`apiKey${keyNumber}`)?.trim();
+
+        // Validate API key
+        if (!apiKey || apiKey === '') {
+            this.triggerApiKeyError(keyNumber);
+            return;
+        }
+
+        // Set the active API key before starting
+        localStorage.setItem('apiKey', apiKey);
         this.onStart();
     }
 
@@ -227,57 +247,22 @@ export class MainView extends LitElement {
     }
 
     // Method to trigger the red blink animation
-    triggerApiKeyError() {
-        this.showApiKeyError = true;
-        // Remove the error class after 1 second
-        setTimeout(() => {
-            this.showApiKeyError = false;
-        }, 1000);
-    }
-
-    getStartButtonText() {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-
-        const cmdIcon = html`<svg width="14px" height="14px" viewBox="0 0 24 24" stroke-width="2" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M15 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path
-                d="M9 6C9 4.34315 7.65685 3 6 3C4.34315 3 3 4.34315 3 6C3 7.65685 4.34315 9 6 9H18C19.6569 9 21 7.65685 21 6C21 4.34315 19.6569 3 18 3C16.3431 3 15 4.34315 15 6"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            ></path>
-            <path
-                d="M9 18C9 19.6569 7.65685 21 6 21C4.34315 21 3 19.6569 3 18C3 16.3431 4.34315 15 6 15H18C19.6569 15 21 16.3431 21 18C21 19.6569 19.6569 21 18 21C16.3431 21 15 19.6569 15 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            ></path>
-        </svg>`;
-
-        const enterIcon = html`<svg width="14px" height="14px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-                d="M10.25 19.25L6.75 15.75L10.25 12.25"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            ></path>
-            <path
-                d="M6.75 15.75H12.75C14.9591 15.75 16.75 13.9591 16.75 11.75V4.75"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            ></path>
-        </svg>`;
-
-        if (isMac) {
-            return html`Start Session <span class="shortcut-icons">${cmdIcon}${enterIcon}</span>`;
-        } else {
-            return html`Start Session <span class="shortcut-icons">Ctrl${enterIcon}</span>`;
+    triggerApiKeyError(keyNumber = 1) {
+        if (keyNumber === 1) {
+            this.showApiKeyError = true;
+            setTimeout(() => {
+                this.showApiKeyError = false;
+            }, 1000);
+        } else if (keyNumber === 2) {
+            this.showApiKeyError2 = true;
+            setTimeout(() => {
+                this.showApiKeyError2 = false;
+            }, 1000);
+        } else if (keyNumber === 3) {
+            this.showApiKeyError3 = true;
+            setTimeout(() => {
+                this.showApiKeyError3 = false;
+            }, 1000);
         }
     }
 
@@ -288,15 +273,36 @@ export class MainView extends LitElement {
             <div class="input-group">
                 <input
                     type="password"
-                    placeholder="Enter your Gemini API Key"
-                    .value=${localStorage.getItem('apiKey') || ''}
-                    @input=${this.handleInput}
+                    placeholder="API Key 1"
+                    .value=${localStorage.getItem('apiKey1') || ''}
+                    @input=${e => this.handleInput(e, 1)}
                     class="${this.showApiKeyError ? 'api-key-error' : ''}"
                 />
-                <button @click=${this.handleStartClick} class="start-button ${this.isInitializing ? 'initializing' : ''}">
-                    ${this.getStartButtonText()}
-                </button>
+                <button @click=${() => this.handleStartClick(1)} class="start-button ${this.isInitializing ? 'initializing' : ''}">Start 1</button>
             </div>
+
+            <div class="input-group">
+                <input
+                    type="password"
+                    placeholder="API Key 2"
+                    .value=${localStorage.getItem('apiKey2') || ''}
+                    @input=${e => this.handleInput(e, 2)}
+                    class="${this.showApiKeyError2 ? 'api-key-error' : ''}"
+                />
+                <button @click=${() => this.handleStartClick(2)} class="start-button ${this.isInitializing ? 'initializing' : ''}">Start 2</button>
+            </div>
+
+            <div class="input-group">
+                <input
+                    type="password"
+                    placeholder="API Key 3"
+                    .value=${localStorage.getItem('apiKey3') || ''}
+                    @input=${e => this.handleInput(e, 3)}
+                    class="${this.showApiKeyError3 ? 'api-key-error' : ''}"
+                />
+                <button @click=${() => this.handleStartClick(3)} class="start-button ${this.isInitializing ? 'initializing' : ''}">Start 3</button>
+            </div>
+
             <p class="description">
                 dont have an api key?
                 <span @click=${this.handleAPIKeyHelpClick} class="link">get one here</span>

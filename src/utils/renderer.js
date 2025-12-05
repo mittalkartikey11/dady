@@ -31,6 +31,10 @@ let offscreenCanvas = null;
 let offscreenContext = null;
 let currentImageQuality = 'medium'; // Store current image quality for manual screenshots
 
+// Pause control state
+let isAudioPaused = false;
+let lastScreenshotSuccess = false;
+
 const isLinux = process.platform === 'linux';
 const isMacOS = process.platform === 'darwin';
 
@@ -365,6 +369,11 @@ function setupLinuxMicProcessing(micStream) {
     const samplesPerChunk = SAMPLE_RATE * AUDIO_CHUNK_DURATION;
 
     micProcessor.onaudioprocess = async e => {
+        // Check if audio is paused
+        if (isAudioPaused) {
+            return;
+        }
+
         const inputData = e.inputBuffer.getChannelData(0);
         audioBuffer.push(...inputData);
 
@@ -398,6 +407,11 @@ function setupLinuxSystemAudioProcessing() {
     const samplesPerChunk = SAMPLE_RATE * AUDIO_CHUNK_DURATION;
 
     audioProcessor.onaudioprocess = async e => {
+        // Check if audio is paused
+        if (isAudioPaused) {
+            return;
+        }
+
         const inputData = e.inputBuffer.getChannelData(0);
         audioBuffer.push(...inputData);
 
@@ -428,6 +442,11 @@ function setupWindowsLoopbackProcessing() {
     const samplesPerChunk = SAMPLE_RATE * AUDIO_CHUNK_DURATION;
 
     audioProcessor.onaudioprocess = async e => {
+        // Check if audio is paused
+        if (isAudioPaused) {
+            return;
+        }
+
         const inputData = e.inputBuffer.getChannelData(0);
         audioBuffer.push(...inputData);
 
@@ -538,8 +557,15 @@ async function captureScreenshot(imageQuality = 'medium', isManual = false) {
                     const imageTokens = tokenTracker.calculateImageTokens(offscreenCanvas.width, offscreenCanvas.height);
                     tokenTracker.addTokens(imageTokens, 'image');
                     console.log(`📊 Image sent successfully - ${imageTokens} tokens used (${offscreenCanvas.width}x${offscreenCanvas.height})`);
+
+                    // Set screenshot success flag
+                    lastScreenshotSuccess = true;
+
+                    // Notify UI of screenshot success
+                    window.dispatchEvent(new CustomEvent('screenshot-success'));
                 } else {
                     console.error('Failed to send image:', result.error);
+                    lastScreenshotSuccess = false;
                 }
             };
             reader.readAsDataURL(blob);
@@ -552,13 +578,42 @@ async function captureScreenshot(imageQuality = 'medium', isManual = false) {
 async function captureManualScreenshot(imageQuality = null) {
     console.log('Manual screenshot triggered');
     const quality = imageQuality || currentImageQuality;
+
+    // Reset success flag before capture
+    lastScreenshotSuccess = false;
+
     await captureScreenshot(quality, true); // Pass true for isManual
-    await new Promise(resolve => setTimeout(resolve, 2000)); // TODO shitty hack
+    // Wait for screenshot to be sent to API before sending text message
+    // This ensures the AI has the visual context before processing the text query
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await sendTextMessage(`Help me on this page, give me the answer no bs, complete answer.
         So if its a code question, give me the approach in few bullet points, then the entire code. Also if theres anything else i need to know, tell me.
         If its a question about the website, give me the answer no bs, complete answer.
         If its a mcq question, give me the answer no bs, complete answer.
         `);
+}
+
+// Pause/resume audio listening functions
+function pauseAudioListening() {
+    isAudioPaused = true;
+    console.log('Audio listening paused');
+}
+
+function resumeAudioListening() {
+    isAudioPaused = false;
+    console.log('Audio listening resumed');
+}
+
+function isAudioListeningPaused() {
+    return isAudioPaused;
+}
+
+function getLastScreenshotSuccess() {
+    return lastScreenshotSuccess;
+}
+
+function resetScreenshotSuccess() {
+    lastScreenshotSuccess = false;
 }
 
 // Expose functions to global scope for external access
@@ -768,6 +823,11 @@ const cheddar = {
     stopCapture,
     sendTextMessage,
     handleShortcut,
+    pauseAudioListening,
+    resumeAudioListening,
+    isAudioListeningPaused,
+    getLastScreenshotSuccess,
+    resetScreenshotSuccess,
 
     // Conversation history functions
     getAllConversationSessions,

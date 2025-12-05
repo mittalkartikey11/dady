@@ -12,7 +12,11 @@ export class CheatingDaddyApp extends LitElement {
     static styles = css`
         * {
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family:
+                'Inter',
+                -apple-system,
+                BlinkMacSystemFont,
+                sans-serif;
             margin: 0px;
             padding: 0px;
             cursor: default;
@@ -67,7 +71,9 @@ export class CheatingDaddyApp extends LitElement {
         .view-container {
             opacity: 1;
             transform: translateY(0);
-            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+            transition:
+                opacity 0.15s ease-out,
+                transform 0.15s ease-out;
             height: 100%;
         }
 
@@ -171,7 +177,7 @@ export class CheatingDaddyApp extends LitElement {
 
     setStatus(text) {
         this.statusText = text;
-        
+
         // Mark response as complete when we get certain status messages
         if (text.includes('Ready') || text.includes('Listening') || text.includes('Error')) {
             this._currentResponseIsComplete = true;
@@ -200,6 +206,7 @@ export class CheatingDaddyApp extends LitElement {
             // For substantial responses, update the last one (streaming behavior)
             // Only update if the current response is not marked as complete
             this.responses = [...this.responses.slice(0, this.responses.length - 1), response];
+            // Do NOT change currentResponseIndex when updating - this prevents navigation
             console.log('[setResponse] Updated last response:', response);
         } else {
             // For filler responses or when current response is complete, add as new
@@ -208,7 +215,7 @@ export class CheatingDaddyApp extends LitElement {
             this._currentResponseIsComplete = false;
             console.log('[setResponse] Added response as new:', response);
         }
-        this.shouldAnimateResponse = true;
+        this.shouldAnimateResponse = false; // Disable animation
         this.requestUpdate();
     }
 
