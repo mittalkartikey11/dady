@@ -4,22 +4,34 @@ import { resizeLayout } from '../../utils/windowResize.js';
 export class MainView extends LitElement {
     static styles = css`
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             cursor: default;
             user-select: none;
         }
 
         .welcome {
-            font-size: 24px;
-            margin-bottom: 8px;
-            font-weight: 600;
+            font-size: 32px;
+            margin-bottom: 12px;
+            font-weight: 700;
             margin-top: auto;
+            color: #ffd700;
+            letter-spacing: -0.5px;
         }
 
         .input-group {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
+            padding: 16px;
+            background: rgba(255, 215, 0, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .input-group:hover {
+            background: rgba(255, 215, 0, 0.08);
+            border-color: rgba(255, 215, 0, 0.2);
         }
 
         .input-group input {
@@ -30,17 +42,18 @@ export class MainView extends LitElement {
             background: var(--input-background);
             color: var(--text-color);
             border: 1px solid var(--button-border);
-            padding: 10px 14px;
+            padding: 12px 16px;
             width: 100%;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 14px;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--focus-border-color);
-            box-shadow: 0 0 0 3px var(--focus-box-shadow);
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
             background: var(--input-focus-background);
         }
 
@@ -72,31 +85,38 @@ export class MainView extends LitElement {
         }
 
         .start-button {
-            background: var(--start-button-background);
-            color: var(--start-button-color);
-            border: 1px solid var(--start-button-border);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
+            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            color: #000;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
             white-space: nowrap;
             display: flex;
             align-items: center;
             gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
 
         .start-button:hover {
-            background: var(--start-button-hover-background);
-            border-color: var(--start-button-hover-border);
+            background: linear-gradient(135deg, #ffc700 0%, #ff9500 100%);
+            border-color: rgba(255, 215, 0, 0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
         }
 
         .start-button.initializing {
-            opacity: 0.5;
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .start-button.initializing:hover {
-            background: var(--start-button-background);
-            border-color: var(--start-button-border);
+            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            border-color: rgba(255, 215, 0, 0.3);
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
 
         .shortcut-icons {
@@ -120,12 +140,19 @@ export class MainView extends LitElement {
             font-size: 14px;
             margin-bottom: 24px;
             line-height: 1.5;
+            text-align: center;
         }
 
         .link {
-            color: var(--link-color);
+            color: #ffd700;
             text-decoration: underline;
             cursor: pointer;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .link:hover {
+            color: #ffc700;
         }
 
         .shortcut-hint {
