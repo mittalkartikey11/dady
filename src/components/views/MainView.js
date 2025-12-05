@@ -391,6 +391,15 @@ export class MainView extends LitElement {
         this.requestUpdate();
     }
 
+    handlePromptSlotFocus(slotNumber) {
+        // When clicking to focus for editing, also select the prompt
+        const savedPrompt = localStorage.getItem(`customPrompt${slotNumber}`) || '';
+        this.customPrompt = savedPrompt;
+        localStorage.setItem('customPrompt', savedPrompt);
+        this.activePromptSlot = slotNumber;
+        this.requestUpdate();
+    }
+
     render() {
         return html`
             <div class="welcome">Welcome</div>
@@ -448,7 +457,7 @@ export class MainView extends LitElement {
                     placeholder="Custom Prompt 1 - Click to use"
                     .value=${localStorage.getItem('customPrompt1') || ''}
                     @input=${e => this.handlePromptSlotInput(1, e)}
-                    @click=${() => this.handlePromptSlotClick(1)}
+                    @focus=${() => this.handlePromptSlotFocus(1)}
                 />
                 <input
                     type="text"
@@ -456,7 +465,7 @@ export class MainView extends LitElement {
                     placeholder="Custom Prompt 2 - Click to use"
                     .value=${localStorage.getItem('customPrompt2') || ''}
                     @input=${e => this.handlePromptSlotInput(2, e)}
-                    @click=${() => this.handlePromptSlotClick(2)}
+                    @focus=${() => this.handlePromptSlotFocus(2)}
                 />
                 <input
                     type="text"
@@ -464,7 +473,7 @@ export class MainView extends LitElement {
                     placeholder="Custom Prompt 3 - Click to use"
                     .value=${localStorage.getItem('customPrompt3') || ''}
                     @input=${e => this.handlePromptSlotInput(3, e)}
-                    @click=${() => this.handlePromptSlotClick(3)}
+                    @focus=${() => this.handlePromptSlotFocus(3)}
                 />
             </div>
         `;
