@@ -13,7 +13,7 @@ export class CheatingDaddyApp extends LitElement {
         * {
             box-sizing: border-box;
             font-family:
-                'Inter',
+                'DM Sans',
                 -apple-system,
                 BlinkMacSystemFont,
                 sans-serif;
@@ -120,6 +120,7 @@ export class CheatingDaddyApp extends LitElement {
         _isClickThrough: { state: true },
         _awaitingNewResponse: { state: true },
         shouldAnimateResponse: { type: Boolean },
+        _autoNavigationPaused: { state: true },
     };
 
     constructor() {
@@ -142,6 +143,7 @@ export class CheatingDaddyApp extends LitElement {
         this._awaitingNewResponse = false;
         this._currentResponseIsComplete = true;
         this.shouldAnimateResponse = false;
+        this._autoNavigationPaused = false;
 
         // Apply layout mode to document root
         this.updateLayoutMode();
@@ -162,6 +164,13 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('click-through-toggled', (_, isEnabled) => {
                 this._isClickThrough = isEnabled;
             });
+            ipcRenderer.on('update-token-count', (_, usageMetadata) => {
+                try {
+                    this.updateTokenCount(usageMetadata);
+                } catch (error) {
+                    console.error('Error updating token count:', error);
+                }
+            });
         }
     }
 
@@ -172,6 +181,7 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.removeAllListeners('update-response');
             ipcRenderer.removeAllListeners('update-status');
             ipcRenderer.removeAllListeners('click-through-toggled');
+            ipcRenderer.removeAllListeners('update-token-count');
         }
     }
 
@@ -198,7 +208,10 @@ export class CheatingDaddyApp extends LitElement {
         if (this._awaitingNewResponse || this.responses.length === 0) {
             // Always add as new response when explicitly waiting for one
             this.responses = [...this.responses, response];
-            this.currentResponseIndex = this.responses.length - 1;
+            // Only auto-navigate if not paused
+            if (!this._autoNavigationPaused) {
+                this.currentResponseIndex = this.responses.length - 1;
+            }
             this._awaitingNewResponse = false;
             this._currentResponseIsComplete = false;
             console.log('[setResponse] Pushed new response:', response);
@@ -211,7 +224,10 @@ export class CheatingDaddyApp extends LitElement {
         } else {
             // For filler responses or when current response is complete, add as new
             this.responses = [...this.responses, response];
-            this.currentResponseIndex = this.responses.length - 1;
+            // Only auto-navigate if not paused
+            if (!this._autoNavigationPaused) {
+                this.currentResponseIndex = this.responses.length - 1;
+            }
             this._currentResponseIsComplete = false;
             console.log('[setResponse] Added response as new:', response);
         }
@@ -354,6 +370,19 @@ export class CheatingDaddyApp extends LitElement {
         this.requestUpdate();
     }
 
+    handleAutoNavigationToggled(e) {
+        this._autoNavigationPaused = e.detail.paused;
+        console.log('[handleAutoNavigationToggled] Auto-navigation paused:', this._autoNavigationPaused);
+    }
+
+    updateTokenCount(usageMetadata) {
+        // Find the assistant view and update its token count
+        const assistantView = this.shadowRoot?.querySelector('assistant-view');
+        if (assistantView) {
+            assistantView.updateTokenCount(usageMetadata);
+        }
+    }
+
     // Onboarding event handlers
     handleOnboardingComplete() {
         this.currentView = 'main';
@@ -453,6 +482,7 @@ export class CheatingDaddyApp extends LitElement {
                         .onSendText=${message => this.handleSendText(message)}
                         .shouldAnimateResponse=${this.shouldAnimateResponse}
                         @response-index-changed=${this.handleResponseIndexChanged}
+                        @auto-navigation-toggled=${this.handleAutoNavigationToggled}
                         @response-animation-complete=${() => {
                             this.shouldAnimateResponse = false;
                             this._currentResponseIsComplete = true;

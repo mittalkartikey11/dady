@@ -9,12 +9,12 @@ export class AssistantView extends LitElement {
         }
 
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             cursor: default;
         }
 
         .response-container {
-            height: calc(100% - 60px);
+            height: calc(100% - 110px);
             overflow-y: auto;
             border-radius: 10px;
             font-size: var(--response-font-size, 18px);
@@ -59,7 +59,7 @@ export class AssistantView extends LitElement {
         .response-container h5,
         .response-container h6 {
             margin: 1.2em 0 0.6em 0;
-            color: var(--text-color);
+            color: var(--golden-primary);
             font-weight: 600;
         }
 
@@ -101,13 +101,14 @@ export class AssistantView extends LitElement {
         .response-container blockquote {
             margin: 1em 0;
             padding: 0.5em 1em;
-            border-left: 4px solid var(--focus-border-color);
-            background: rgba(0, 122, 255, 0.1);
+            border-left: 4px solid #9c27b0;
+            background: rgba(156, 39, 176, 0.15);
             font-style: italic;
         }
 
         .response-container code {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--golden-rgba-medium);
+            color: var(--golden-primary);
             padding: 0.2em 0.4em;
             border-radius: 3px;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -115,8 +116,8 @@ export class AssistantView extends LitElement {
         }
 
         .response-container pre {
-            background: var(--input-background);
-            border: 1px solid var(--button-border);
+            background: rgba(30, 30, 50, 0.8);
+            border: 1px solid var(--golden-rgba-border-strong);
             border-radius: 6px;
             padding: 1em;
             overflow-x: auto;
@@ -127,6 +128,7 @@ export class AssistantView extends LitElement {
             background: none;
             padding: 0;
             border-radius: 0;
+            color: var(--golden-primary);
         }
 
         .response-container a {
@@ -341,7 +343,7 @@ export class AssistantView extends LitElement {
         }
 
         .screenshot-button.success {
-            color: #ffd700;
+            color: var(--golden-primary);
         }
 
         .screenshot-button svg {
@@ -364,6 +366,63 @@ export class AssistantView extends LitElement {
             font-size: 10px;
             font-weight: bold;
         }
+
+        .token-badge {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--golden-primary);
+            border: 1px solid var(--golden-rgba-border-strong);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .auto-nav-button {
+            background: transparent;
+            color: var(--start-button-background);
+            border: none;
+            padding: 4px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .auto-nav-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .auto-nav-button.paused {
+            color: #ff9800;
+        }
+
+        .auto-nav-button svg {
+            stroke: currentColor !important;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--header-background);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     `;
 
     static properties = {
@@ -375,6 +434,8 @@ export class AssistantView extends LitElement {
         savedResponses: { type: Array },
         isAudioPaused: { type: Boolean },
         screenshotSuccess: { type: Boolean },
+        autoNavigationPaused: { type: Boolean },
+        totalTokenCount: { type: Number },
     };
 
     constructor() {
@@ -386,6 +447,8 @@ export class AssistantView extends LitElement {
         this._lastAnimatedWordCount = 0;
         this.isAudioPaused = false;
         this.screenshotSuccess = false;
+        this.autoNavigationPaused = false;
+        this.totalTokenCount = 0;
         // Load saved responses from localStorage
         try {
             this.savedResponses = JSON.parse(localStorage.getItem('savedResponses') || '[]');
@@ -653,6 +716,25 @@ export class AssistantView extends LitElement {
         }
     }
 
+    toggleAutoNavigation() {
+        this.autoNavigationPaused = !this.autoNavigationPaused;
+        this.dispatchEvent(
+            new CustomEvent('auto-navigation-toggled', {
+                detail: { paused: this.autoNavigationPaused },
+                bubbles: true,
+                composed: true,
+            })
+        );
+        this.requestUpdate();
+    }
+
+    updateTokenCount(usageMetadata) {
+        if (usageMetadata && typeof usageMetadata === 'object' && usageMetadata.totalTokenCount) {
+            this.totalTokenCount = usageMetadata.totalTokenCount;
+            this.requestUpdate();
+        }
+    }
+
     handleManualScreenshot() {
         if (window.captureManualScreenshot) {
             // Reset success flag before capture
@@ -705,6 +787,12 @@ export class AssistantView extends LitElement {
         const isSaved = this.isResponseSaved();
 
         return html`
+            <div class="header-container">
+                <div class="header-left">
+                    ${this.totalTokenCount > 0 ? html`<span class="token-badge">🪙 Tokens: ${this.totalTokenCount.toLocaleString()}</span>` : ''}
+                </div>
+            </div>
+
             <div class="response-container" id="responseContainer"></div>
 
             <div class="text-input-container">
@@ -723,6 +811,36 @@ export class AssistantView extends LitElement {
                 </button>
 
                 ${this.responses.length > 0 ? html` <span class="response-counter">${responseCounter}</span> ` : ''}
+
+                <button
+                    class="auto-nav-button ${this.autoNavigationPaused ? 'paused' : ''}"
+                    @click=${this.toggleAutoNavigation}
+                    title="${this.autoNavigationPaused ? 'Resume auto-navigation' : 'Pause auto-navigation'}"
+                >
+                    ${this.autoNavigationPaused
+                        ? html`
+                              <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path
+                                      d="M6 4L18 12L6 20V4Z"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                  ></path>
+                              </svg>
+                          `
+                        : html`
+                              <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path
+                                      d="M6 5V19M18 5V19"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                  ></path>
+                              </svg>
+                          `}
+                </button>
 
                 <button
                     class="pause-button ${this.isAudioPaused ? 'paused' : ''}"

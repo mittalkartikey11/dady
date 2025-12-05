@@ -3,6 +3,12 @@
     <head>
         <meta http-equiv="content-security-policy" content="script-src 'self' 'unsafe-inline'" />
         <title>Screen and Audio Capture</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+            rel="stylesheet"
+        />
         <style>
             :root {
                 --background-transparent: transparent;
@@ -41,6 +47,16 @@
                 --link-color: #007aff;
                 --key-background: rgba(255, 255, 255, 0.1);
                 --scrollbar-background: rgba(0, 0, 0, 0.4);
+
+                /* Golden theme colors */
+                --golden-primary: #ffd700;
+                --golden-secondary: #ffa500;
+                --golden-light: #ffc700;
+                --golden-dark: #ff9500;
+                --golden-rgba-light: rgba(255, 215, 0, 0.05);
+                --golden-rgba-medium: rgba(255, 215, 0, 0.15);
+                --golden-rgba-border: rgba(255, 215, 0, 0.1);
+                --golden-rgba-border-strong: rgba(255, 215, 0, 0.3);
 
                 /* Layout-specific variables */
                 --header-padding: 10px 20px;
@@ -82,7 +98,7 @@
 
             body {
                 font-family:
-                    'Inter',
+                    'DM Sans',
                     -apple-system,
                     BlinkMacSystemFont,
                     sans-serif;

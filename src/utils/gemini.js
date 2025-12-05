@@ -250,6 +250,11 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                 onmessage: function (message) {
                     console.log('----------------', message);
 
+                    // Extract and send token count if available
+                    if (message.usageMetadata?.totalTokenCount) {
+                        sendToRenderer('update-token-count', message.usageMetadata);
+                    }
+
                     if (message.serverContent?.inputTranscription?.results) {
                         currentTranscription += formatSpeakerResults(message.serverContent.inputTranscription.results);
                     }
