@@ -42,7 +42,9 @@ export class AssistantView extends LitElement {
             opacity: 0;
             filter: blur(10px);
             display: inline-block;
-            transition: opacity 0.5s, filter 0.5s;
+            transition:
+                opacity 0.5s,
+                filter 0.5s;
         }
         .response-container [data-word].visible {
             opacity: 1;
@@ -289,6 +291,79 @@ export class AssistantView extends LitElement {
         .save-button svg {
             stroke: currentColor !important;
         }
+
+        .pause-button {
+            background: transparent;
+            color: var(--start-button-background);
+            border: none;
+            padding: 4px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .pause-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pause-button.paused {
+            color: #ff9800;
+        }
+
+        .pause-button svg {
+            stroke: currentColor !important;
+        }
+
+        .screenshot-button {
+            background: transparent;
+            color: var(--start-button-background);
+            border: none;
+            padding: 4px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .screenshot-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .screenshot-button.success {
+            color: #ffd700;
+        }
+
+        .screenshot-button svg {
+            stroke: currentColor !important;
+        }
+
+        .screenshot-button.success::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #4caf50;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
     `;
 
     static properties = {
@@ -298,6 +373,8 @@ export class AssistantView extends LitElement {
         onSendText: { type: Function },
         shouldAnimateResponse: { type: Boolean },
         savedResponses: { type: Array },
+        isAudioPaused: { type: Boolean },
+        screenshotSuccess: { type: Boolean },
     };
 
     constructor() {
@@ -307,12 +384,17 @@ export class AssistantView extends LitElement {
         this.selectedProfile = 'interview';
         this.onSendText = () => {};
         this._lastAnimatedWordCount = 0;
+        this.isAudioPaused = false;
+        this.screenshotSuccess = false;
         // Load saved responses from localStorage
         try {
             this.savedResponses = JSON.parse(localStorage.getItem('savedResponses') || '[]');
         } catch (e) {
             this.savedResponses = [];
         }
+
+        // Bind screenshot success handler
+        this.handleScreenshotSuccess = this.handleScreenshotSuccess.bind(this);
     }
 
     getProfileNames() {
@@ -442,6 +524,9 @@ export class AssistantView extends LitElement {
         // Load and apply font size
         this.loadFontSize();
 
+        // Add screenshot success listener
+        window.addEventListener('screenshot-success', this.handleScreenshotSuccess);
+
         // Set up IPC listeners for keyboard shortcuts
         if (window.require) {
             const { ipcRenderer } = window.require('electron');
@@ -475,6 +560,9 @@ export class AssistantView extends LitElement {
 
     disconnectedCallback() {
         super.disconnectedCallback();
+
+        // Remove screenshot success listener
+        window.removeEventListener('screenshot-success', this.handleScreenshotSuccess);
 
         // Clean up IPC listeners
         if (window.require) {
@@ -541,6 +629,39 @@ export class AssistantView extends LitElement {
         return this.savedResponses.some(saved => saved.response === currentResponse);
     }
 
+    handleScreenshotSuccess() {
+        this.screenshotSuccess = true;
+        this.requestUpdate();
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+            this.screenshotSuccess = false;
+            this.requestUpdate();
+        }, 3000);
+    }
+
+    toggleAudioPause() {
+        if (window.cheddar) {
+            if (this.isAudioPaused) {
+                window.cheddar.resumeAudioListening();
+                this.isAudioPaused = false;
+            } else {
+                window.cheddar.pauseAudioListening();
+                this.isAudioPaused = true;
+            }
+            this.requestUpdate();
+        }
+    }
+
+    handleManualScreenshot() {
+        if (window.captureManualScreenshot) {
+            // Reset success flag before capture
+            this.screenshotSuccess = false;
+            this.requestUpdate();
+            window.captureManualScreenshot();
+        }
+    }
+
     firstUpdated() {
         super.firstUpdated();
         this.updateResponseContent();
@@ -566,24 +687,13 @@ export class AssistantView extends LitElement {
             console.log('Rendered response:', renderedResponse);
             container.innerHTML = renderedResponse;
             const words = container.querySelectorAll('[data-word]');
-            if (this.shouldAnimateResponse) {
-                for (let i = 0; i < this._lastAnimatedWordCount && i < words.length; i++) {
-                    words[i].classList.add('visible');
-                }
-                for (let i = this._lastAnimatedWordCount; i < words.length; i++) {
-                    words[i].classList.remove('visible');
-                    setTimeout(() => {
-                        words[i].classList.add('visible');
-                        if (i === words.length - 1) {
-                            this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
-                        }
-                    }, (i - this._lastAnimatedWordCount) * 100);
-                }
-                this._lastAnimatedWordCount = words.length;
-            } else {
-                words.forEach(word => word.classList.add('visible'));
-                this._lastAnimatedWordCount = words.length;
-            }
+
+            // Display all content immediately - no animation
+            words.forEach(word => word.classList.add('visible'));
+            this._lastAnimatedWordCount = words.length;
+
+            // Notify that rendering is complete
+            this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
         } else {
             console.log('Response container not found');
         }
@@ -613,6 +723,75 @@ export class AssistantView extends LitElement {
                 </button>
 
                 ${this.responses.length > 0 ? html` <span class="response-counter">${responseCounter}</span> ` : ''}
+
+                <button
+                    class="pause-button ${this.isAudioPaused ? 'paused' : ''}"
+                    @click=${this.toggleAudioPause}
+                    title="${this.isAudioPaused ? 'Resume microphone listening' : 'Pause microphone listening'}"
+                >
+                    ${this.isAudioPaused
+                        ? html`
+                              <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path
+                                      d="M8 5V19M16 5V19"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                  ></path>
+                              </svg>
+                          `
+                        : html`
+                              <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path
+                                      d="M12 3C10.3431 3 9 4.34315 9 6V12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12V6C15 4.34315 13.6569 3 12 3Z"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                  ></path>
+                                  <path
+                                      d="M5 10V12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12V10"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                  ></path>
+                                  <path
+                                      d="M12 19V22M12 22H9M12 22H15"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                  ></path>
+                              </svg>
+                          `}
+                </button>
+
+                <button
+                    class="screenshot-button ${this.screenshotSuccess ? 'success' : ''}"
+                    @click=${this.handleManualScreenshot}
+                    title="Take screenshot and ask AI"
+                >
+                    <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M4 19V9C4 7.89543 4.89543 7 6 7H8L9.5 4.5H14.5L16 7H18C19.1046 7 20 7.89543 20 9V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        ></path>
+                        <circle
+                            cx="12"
+                            cy="13"
+                            r="3"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        ></circle>
+                    </svg>
+                </button>
 
                 <button
                     class="save-button ${isSaved ? 'saved' : ''}"
