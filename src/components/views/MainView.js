@@ -20,11 +20,11 @@ export class MainView extends LitElement {
 
         .input-group {
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 16px;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
             background: var(--golden-rgba-light);
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid var(--golden-rgba-border);
             transition: all 0.2s ease;
         }
@@ -42,12 +42,39 @@ export class MainView extends LitElement {
             background: var(--input-background);
             color: var(--text-color);
             border: 1px solid var(--button-border);
-            padding: 12px 16px;
+            padding: 8px 12px;
             width: 100%;
-            border-radius: 10px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 13px;
             transition: all 0.2s ease;
             font-weight: 500;
+        }
+
+        textarea {
+            background: var(--input-background);
+            color: var(--text-color);
+            border: 1px solid var(--button-border);
+            padding: 10px 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            font-weight: 400;
+            resize: vertical;
+            min-height: 80px;
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.4;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--golden-primary);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+            background: var(--input-focus-background);
+        }
+
+        textarea::placeholder {
+            color: var(--placeholder-color);
         }
 
         input:focus {
@@ -58,6 +85,51 @@ export class MainView extends LitElement {
         }
 
         input::placeholder {
+            color: var(--placeholder-color);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            margin-top: 16px;
+            opacity: 0.9;
+        }
+
+        .prompt-slots-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .prompt-slot {
+            background: var(--input-background);
+            color: var(--text-color);
+            border: 1px solid var(--button-border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: 400;
+            text-align: left;
+        }
+
+        .prompt-slot:hover {
+            background: var(--input-focus-background);
+            border-color: var(--golden-primary);
+        }
+
+        .prompt-slot.active {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+            font-weight: 500;
+        }
+
+        .prompt-slot::placeholder {
             color: var(--placeholder-color);
         }
 
@@ -88,9 +160,9 @@ export class MainView extends LitElement {
             background: linear-gradient(135deg, var(--golden-primary) 0%, var(--golden-secondary) 100%);
             color: #000;
             border: 1px solid var(--golden-rgba-border-strong);
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 600;
             white-space: nowrap;
             display: flex;
@@ -178,6 +250,8 @@ export class MainView extends LitElement {
         showApiKeyError: { type: Boolean },
         showApiKeyError2: { type: Boolean },
         showApiKeyError3: { type: Boolean },
+        customPrompt: { type: String },
+        activePromptSlot: { type: Number },
     };
 
     constructor() {
@@ -190,6 +264,8 @@ export class MainView extends LitElement {
         this.showApiKeyError2 = false;
         this.showApiKeyError3 = false;
         this.boundKeydownHandler = this.handleKeydown.bind(this);
+        this.customPrompt = '';
+        this.activePromptSlot = 0; // 0 means no slot is active, 1-3 for slots
     }
 
     connectedCallback() {
@@ -203,6 +279,10 @@ export class MainView extends LitElement {
 
         // Load and apply layout mode on startup
         this.loadLayoutMode();
+
+        // Load custom prompt from localStorage
+        this.customPrompt = localStorage.getItem('customPrompt') || '';
+
         // Resize window for this view
         resizeLayout();
     }
@@ -293,6 +373,33 @@ export class MainView extends LitElement {
         }
     }
 
+    handleCustomPromptInput(e) {
+        this.customPrompt = e.target.value;
+        localStorage.setItem('customPrompt', this.customPrompt);
+    }
+
+    handlePromptSlotInput(slotNumber, e) {
+        const value = e.target.value;
+        localStorage.setItem(`customPrompt${slotNumber}`, value);
+    }
+
+    handlePromptSlotClick(slotNumber) {
+        const savedPrompt = localStorage.getItem(`customPrompt${slotNumber}`) || '';
+        this.customPrompt = savedPrompt;
+        localStorage.setItem('customPrompt', savedPrompt);
+        this.activePromptSlot = slotNumber;
+        this.requestUpdate();
+    }
+
+    handlePromptSlotFocus(slotNumber) {
+        // When clicking to focus for editing, also select the prompt
+        const savedPrompt = localStorage.getItem(`customPrompt${slotNumber}`) || '';
+        this.customPrompt = savedPrompt;
+        localStorage.setItem('customPrompt', savedPrompt);
+        this.activePromptSlot = slotNumber;
+        this.requestUpdate();
+    }
+
     render() {
         return html`
             <div class="welcome">Welcome</div>
@@ -334,6 +441,41 @@ export class MainView extends LitElement {
                 dont have an api key?
                 <span @click=${this.handleAPIKeyHelpClick} class="link">get one here</span>
             </p>
+
+            <div class="section-title">Custom Prompt</div>
+            <textarea
+                placeholder="Enter custom instructions for the AI assistant..."
+                .value=${this.customPrompt}
+                @input=${this.handleCustomPromptInput}
+            ></textarea>
+
+            <div class="section-title">Saved Prompts</div>
+            <div class="prompt-slots-container">
+                <input
+                    type="text"
+                    class="prompt-slot ${this.activePromptSlot === 1 ? 'active' : ''}"
+                    placeholder="Custom Prompt 1 - Click to use"
+                    .value=${localStorage.getItem('customPrompt1') || ''}
+                    @input=${e => this.handlePromptSlotInput(1, e)}
+                    @focus=${() => this.handlePromptSlotFocus(1)}
+                />
+                <input
+                    type="text"
+                    class="prompt-slot ${this.activePromptSlot === 2 ? 'active' : ''}"
+                    placeholder="Custom Prompt 2 - Click to use"
+                    .value=${localStorage.getItem('customPrompt2') || ''}
+                    @input=${e => this.handlePromptSlotInput(2, e)}
+                    @focus=${() => this.handlePromptSlotFocus(2)}
+                />
+                <input
+                    type="text"
+                    class="prompt-slot ${this.activePromptSlot === 3 ? 'active' : ''}"
+                    placeholder="Custom Prompt 3 - Click to use"
+                    .value=${localStorage.getItem('customPrompt3') || ''}
+                    @input=${e => this.handlePromptSlotInput(3, e)}
+                    @focus=${() => this.handlePromptSlotFocus(3)}
+                />
+            </div>
         `;
     }
 }
