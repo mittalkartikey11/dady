@@ -583,7 +583,9 @@ async function captureManualScreenshot(imageQuality = null) {
     lastScreenshotSuccess = false;
 
     await captureScreenshot(quality, true); // Pass true for isManual
-    await new Promise(resolve => setTimeout(resolve, 2000)); // TODO shitty hack
+    // Wait for screenshot to be sent to API before sending text message
+    // This ensures the AI has the visual context before processing the text query
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await sendTextMessage(`Help me on this page, give me the answer no bs, complete answer.
         So if its a code question, give me the approach in few bullet points, then the entire code. Also if theres anything else i need to know, tell me.
         If its a question about the website, give me the answer no bs, complete answer.
